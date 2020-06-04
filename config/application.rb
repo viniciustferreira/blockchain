@@ -14,6 +14,7 @@ require "action_view/railtie"
 require "action_cable/engine"
 # require "sprockets/railtie"
 require "rails/test_unit/railtie"
+require "pry" if ENV['RAILS_ENV'] == 'test' || ENV['RAILS_ENV'] == 'development'
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -25,6 +26,9 @@ module Blockchain
     config.load_defaults 6.0
     config.paths.add "/lib", glob: "**/*.rb"
     config.autoload_paths += Dir["#{Rails.root}/lib/**/"]
+    config.generators do |g|
+      g.factory_bot false
+    end
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers

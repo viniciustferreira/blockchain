@@ -1,42 +1,51 @@
-
 class CoinBlockchain < GenericBlockchain
   attr_accessor :transactions
+  before_create :initialize_blockchain
 
-  def initialize
+  def initialize_blockchain
     super
-    @transactions = transaction_list
+    transaction_list
+    self
   end
 
-  def transaction_list
-    @transactions ||= Transaction.twenty_most_valuable
-      .map(&:to_s)
-      .join(',') 
+  def update_blockchain
+    #atualizar o repositório
   end
-
-  # def create_block(nonce, previous_hash, hash, creation_datetime, transactions)
-  #   {
-  #     nonce: nonce,
-  #     timestamp: creation_datetime,
-  #     previous_hash: previous_hash, 
-  #     hash: hash, 
-  #     transactions: transactions
-  #   }
-  # end
 
   def mine_block
+    return nil if transaction_list == ""
+
+    create_first_block if CoinBlockchain.first.nil?
+
     nonce = 1
     creation_datetime = DateTime.now
-    previous_hash = self.last
+    previous_hash = CoinBlockchain.last.block_hash
     good_nonce = false
 
     until good_nonce == true do 
-      hash = Digest::SHA2.hexdigest("#{nonce}#{creation_datetime}#{previous_hash}#{transactions}")
+      hash = Digest::SHA2.hexdigest("#{nonce}#{previous_hash}#{transactions}")
       if is_hash_valid?(hash)
         good_nonce = true
-        return create({ nonce: nonce, previous_hash: previous_hash, hash: hash, creation_datetime: creation_datetime, transactions: transactions })
+        Transaction.mark_transactions_as_clear(transaction_list)
+        return CoinBlockchain.create({ nonce: nonce, previous_hash: previous_hash, block_type: "coin", block_hash: hash, transactions: transactions })
       else
         nonce = nonce + 1
       end
     end
+  end
+
+  private
+
+  def transaction_list
+    @transactions ||= Transaction.twenty_most_valuable
+      .map(&:id)
+      .join(',') 
+  end
+  
+  #TODO: create a migration to do that
+  def create_first_block
+    first_datetime = DateTime.now
+    Transaction.create_first_transaction
+    CoinBlockchain.create(block_type: "coin", nonce: 1, previous_hash: "0", block_hash: Digest::SHA2.hexdigest("1#{first_datetime.to_s}0"))
   end
 end
