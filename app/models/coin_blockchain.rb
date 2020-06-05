@@ -28,7 +28,6 @@ class CoinBlockchain < GenericBlockchain
         hash = Digest::SHA2.hexdigest("#{nonce}#{previous_hash}#{transactions}")
         if is_hash_valid?(hash)
           good_nonce = true
-          puts nonce
           Transaction.mark_transactions_as_clear(transaction_list)
           created_blockchain = CoinBlockchain.create({ nonce: nonce, previous_hash: previous_hash, block_type: "coin", block_hash: hash, transactions: transactions })
         else
