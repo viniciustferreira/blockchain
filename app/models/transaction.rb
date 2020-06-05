@@ -35,7 +35,7 @@ class Transaction < ApplicationRecord
   def self.mark_transactions_as_clear(transactions)
     transactions.split(',').each do |transaction_id|
       transaction = self.find(transaction_id)
-      transaction.update_attributes(insertion_date: DateTime.now)
+      transaction.update(insertion_date: DateTime.now)
     end
   end
 end
