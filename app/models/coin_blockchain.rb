@@ -17,19 +17,33 @@ class CoinBlockchain < GenericBlockchain
 
     create_first_block if CoinBlockchain.first.nil?
 
-    nonce = 1
     creation_datetime = DateTime.now
     previous_hash = CoinBlockchain.last.block_hash
     good_nonce = false
+    created_blockchain = nil
+    threads = []
+ 
+    procedure = Proc.new do |nonce|
+      until good_nonce == true || created_blockchain do 
+        hash = Digest::SHA2.hexdigest("#{nonce}#{previous_hash}#{transactions}")
+        if is_hash_valid?(hash)
+          good_nonce = true
+          puts nonce
+          Transaction.mark_transactions_as_clear(transaction_list)
+          created_blockchain = CoinBlockchain.create({ nonce: nonce, previous_hash: previous_hash, block_type: "coin", block_hash: hash, transactions: transactions })
+        else
+          nonce = nonce + 1
+        end
+      end
+    end
 
-    until good_nonce == true do 
-      hash = Digest::SHA2.hexdigest("#{nonce}#{previous_hash}#{transactions}")
-      if is_hash_valid?(hash)
-        good_nonce = true
-        Transaction.mark_transactions_as_clear(transaction_list)
-        return CoinBlockchain.create({ nonce: nonce, previous_hash: previous_hash, block_type: "coin", block_hash: hash, transactions: transactions })
-      else
-        nonce = nonce + 1
+    threads << Thread.new { procedure.call(1) }
+    threads << Thread.new { procedure.call(1000000) }
+
+    while true
+      if created_blockchain
+        threads.each {|t| t.kill }
+        return created_blockchain
       end
     end
   end
