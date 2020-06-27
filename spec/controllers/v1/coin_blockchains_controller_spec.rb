@@ -11,7 +11,10 @@ RSpec.describe V1::CoinBlockchainsController do
     end
 
     it "responds with an amount error" do
+      allow(Factories::CreateBlockchain).to receive(:create_coin_block)
+        .and_return(nil)
       post "mine_block"
+
       expect(JSON.parse(response.body)).to eq({ "creation" => "error" })
       expect(response.status).to eq(401)
     end
