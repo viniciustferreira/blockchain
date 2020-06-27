@@ -4,7 +4,6 @@ class CoinBlockchain < GenericBlockchain
 
   def initialize_blockchain
     super
-    transaction_list
     self
   end
 
@@ -14,40 +13,26 @@ class CoinBlockchain < GenericBlockchain
 
   def mine_block
     return nil if transaction_list == ""
-
     create_first_block if CoinBlockchain.first.nil?
 
-    creation_datetime = DateTime.now
-    previous_hash = CoinBlockchain.last.block_hash
-    good_nonce = false
-    created_blockchain = nil
-    threads = []
- 
-    procedure = Proc.new do |nonce|
-      until good_nonce == true || created_blockchain do 
-        hash = Digest::SHA2.hexdigest("#{nonce}#{previous_hash}#{transactions}")
-        if is_hash_valid?(hash)
-          good_nonce = true
-          Transaction.mark_transactions_as_clear(transaction_list)
-          created_blockchain = CoinBlockchain.create({ nonce: nonce, previous_hash: previous_hash, block_type: "coin", block_hash: hash, transactions: transactions })
-        else
-          nonce = nonce + 1
-        end
-      end
-    end
+    Proc.new do |nonce|
+      previous_hash = CoinBlockchain.last.block_hash
+      new_hash = generate_new_hash(nonce, previous_hash)
 
-    threads << Thread.new { procedure.call(1) }
-    threads << Thread.new { procedure.call(1000000) }
-
-    while true
-      if created_blockchain
-        threads.each {|t| t.kill }
-        return created_blockchain
+      until is_hash_valid?(new_hash) do
+        nonce += 1
+        new_hash = generate_new_hash(nonce, previous_hash)
       end
+      Transaction.mark_transactions_as_clear(transaction_list)
+      CoinBlockchain.create({ nonce: nonce, previous_hash: previous_hash, block_type: "coin", block_hash: new_hash, transactions: transaction_list })
     end
   end
 
   private
+
+  def generate_new_hash(nonce, previous_hash)
+    Digest::SHA2.hexdigest("#{nonce}#{previous_hash}#{transaction_list}")
+  end
 
   def transaction_list
     @transactions ||= Transaction.twenty_most_valuable
