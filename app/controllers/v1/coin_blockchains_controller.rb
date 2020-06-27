@@ -2,11 +2,12 @@ module V1
   class CoinBlockchainsController < ApplicationController
 
     def mine_block
-      block = Factories::CreateBlockchain.create_coin_block
-      if block.nil?
+      new_block = Factories::CreateBlockchain.create_coin_block
+
+      if new_block.nil?
         render json: { creation: "error" }, status: 401
       else
-        render json: { creation: "ok", block_id: block.id }, status: 201
+        render json: { creation: "ok", block_id: new_block.id }, status: 201
       end
     end
 
