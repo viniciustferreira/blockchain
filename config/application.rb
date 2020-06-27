@@ -24,8 +24,8 @@ module Blockchain
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 6.0
-    config.paths.add "/lib", glob: "**/*.rb"
-    config.autoload_paths += Dir["#{Rails.root}/lib/**/"]
+    config.eager_load = true
+    config.active_job.queue_adapter = :sidekiq
     config.generators do |g|
       g.factory_bot false
     end

@@ -1,5 +1,7 @@
 Rails.application.routes.draw do
   namespace :v1 do
+    # require 'sidekiq/web'
+    # mount Sidekiq::Web => '/sidekiq'
     post "/mine_block", to: "coin_blockchains#mine_block"
     post "/add_user", to: "coin_blockchains#add_user"
     post "/add_node", to: "coin_blockchains#add_node"
